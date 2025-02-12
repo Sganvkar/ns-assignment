@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nerve Web Assignment</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+
+      .toggle-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        overflow: hidden;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .toggle-container input[type="radio"] {
+        display: none;
+      }
+      .toggle-container label {
+        flex: 1;
+        text-align: center;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: background-color 0.3s, color 0.3s;
+        border-right: 1px solid #ccc;
+        background-color: #f0f0f0;
+        color: #333;
+      }
+      .toggle-container label:last-child {
+        border-right: none;
+      }
+      .toggle-container input[type="radio"]:checked + label {
+        background-color: #007bff;
+        color: #fff;
+      }
+
+      .dropdown-container {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      #date-select {
+        padding: 8px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      .cards-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 10px;
+        min-width: 200px;
+        text-align: center;
+        background-color: #fafafa;
+      }
+      .empty-state {
+        text-align: center;
+        font-style: italic;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toggle-container">
+      <input type="radio" id="bullish" name="view" value="Bullish" checked />
+      <label for="bullish">Bullish</label>
+
+      <input type="radio" id="bearish" name="view" value="Bearish" />
+      <label for="bearish">Bearish</label>
+
+      <input type="radio" id="rangebound" name="view" value="RangeBound" />
+      <label for="rangebound">RangeBound</label>
+
+      <input type="radio" id="volatile" name="view" value="Volatile" />
+      <label for="volatile">Volatile</label>
+    </div>
+
+    <div class="dropdown-container">
+      <select id="date-select"></select>
+    </div>
+
+    <div id="strategies-by-date" class="cards-container"></div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const dateArray = [
+          "24-Apr-2024",
+          "02-May-2024",
+          "09-May-2024",
+          "31-May-2024",
+          "21-Jun-2024"
+        ];
+
+        const strategyArray = [
+          {
+            View: "Bullish",
+            Value: {
+              "24-Apr-2024": [
+                "Bull Call Spread",
+                "Bull Put Spread",
+                "Bull Put Spread",
+                "Long Call",
+                "Bull Put Spread",
+                "Bull Call Spread",
+                "Strategy1",
+                "Bull Call Spread",
+                "Strategy1",
+                "Strategy1",
+                "SpreadStrategy",
+                "Bull Call Spread"
+              ],
+              "02-May-2024": [
+                "Bull Call Spread",
+                "Bull Call Spread",
+                "Bull Put Spread",
+                "Long Call",
+                "Long Call",
+                "Long Call",
+                "Bull Put Spread",
+                "Bull Call Spread",
+                "Strategy1",
+                "Bull Call Spread",
+                "Strategy2",
+                "Strategy1",
+                "Strategy2",
+                "Bull Call Spread"
+              ],
+              "09-May-2024": [
+                "Strategy Put",
+                "Strategy Call",
+                "Strategy Call",
+                "Strategy Call",
+                "Strategy Put"
+              ]
+            }
+          },
+          {
+            View: "Bearish",
+            Value: {
+              "24-Apr-2024": [
+                "Bear Call Spread",
+                "Bear Call Spread",
+                "Bear Call Spread",
+                "Long Put",
+                "Long Put",
+                "Long Put",
+                "Bear Call Spread"
+              ],
+              "31-May-2024": [
+                "Long Put",
+                "Long Put",
+                "Long Put",
+                "Long Put",
+                "Long Put"
+              ],
+              "21-Jun-2024": [
+                "Strategy3",
+                "Strategy3",
+                "Bear Put Spread",
+                "Strategy3",
+                "Long Put",
+                "Long Put"
+              ]
+            }
+          }
+        ];
+
+        const dataByView = strategyArray.reduce((acc, item) => {
+          acc[item.View] = item.Value;
+          return acc;
+        }, {});
+
+        const dateSelectEl = document.getElementById("date-select");
+        const strategiesByDateEl = document.getElementById("strategies-by-date");
+
+        if (!dateSelectEl) {
+          console.error('Element with ID "date-select" not found.');
+          return;
+        }
+        if (!strategiesByDateEl) {
+          console.error('Element with ID "strategies-by-date" not found.');
+          return;
+        }
+
+        dateArray.forEach((date) => {
+          const option = document.createElement("option");
+          option.value = date;
+          option.textContent = date;
+          dateSelectEl.appendChild(option);
+        });
+
+        let selectedView = "Bullish";
+        let selectedStrategy = dataByView[selectedView] || {};
+        let selectedDate = dateSelectEl.value || dateArray[0];
+
+        const viewRadioInputs = document.querySelectorAll('input[name="view"]');
+        viewRadioInputs.forEach((input) => {
+          input.addEventListener("change", (event) => {
+            selectedView = event.target.value;
+            selectedStrategy = dataByView[selectedView] || {};
+            renderStrategies();
+          });
+        });
+
+        dateSelectEl.addEventListener("change", (event) => {
+          selectedDate = event.target.value;
+          renderStrategies();
+        });
+
+        const renderStrategies = () => {
+          strategiesByDateEl.innerHTML = "";
+
+          if (!selectedStrategy || !selectedStrategy[selectedDate]) {
+            strategiesByDateEl.innerHTML = `<div class="empty-state">No strategies available for ${selectedDate}</div>`;
+            return;
+          }
+
+          const stratCountByDate = {};
+          const strategies = selectedStrategy[selectedDate];
+          strategies.forEach((strategy) => {
+            stratCountByDate[strategy] = (stratCountByDate[strategy] || 0) + 1;
+          });
+
+          Object.keys(stratCountByDate).forEach((strategyName) => {
+            const count = stratCountByDate[strategyName];
+            const card = document.createElement("div");
+            card.className = "card";
+            card.textContent = `${strategyName}: ${count} ${count === 1 ? "Strategy" : "Strategies"}`;
+            strategiesByDateEl.appendChild(card);
+          });
+        }
+
+        renderStrategies();
+      });
+    </script>
+  </body>
+</html>
